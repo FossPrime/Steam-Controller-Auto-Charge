@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive } from 'vue';
 import { SteamController } from './steamController';
+import StatusBar from './components/StatusBar.vue';
 
 
 const controller = reactive(new SteamController());
@@ -106,9 +107,9 @@ const onCanvasClick = (e: MouseEvent) => {
   selectionStep++;
   
   if (selectionStep === 1) {
-    statusMsg.value = "Now click the FRONT of the Steam Controller.";
+    statusMsg.value = "Now click the Steam button on the controller.";
   } else if (selectionStep === 2) {
-    statusMsg.value = "Now click the BACK of the Steam Controller.";
+    statusMsg.value = "Now click the Share button on the controller.";
   } else if (selectionStep === 3) {
     statusMsg.value = "Tracking started!";
     localStorage.setItem('trackPoints', JSON.stringify(trackPoints));
@@ -267,7 +268,11 @@ const processVideo = () => {
         while (angleErr > Math.PI) angleErr -= 2 * Math.PI;
         while (angleErr < -Math.PI) angleErr += 2 * Math.PI;
         
-        if (controller.isCharging) {
+        if (controller.batteryPercent >= 100) {
+          sendControl("STOP");
+          statusMsg.value = "Battery full! Auto-Charge not needed.";
+          isTracking.value = false;
+        } else if (controller.isCharging) {
           sendControl("STOP");
           statusMsg.value = "Charging! Auto-Charge complete!";
           isTracking.value = false;
@@ -338,11 +343,7 @@ const resetTracking = async () => {
       <h1>Steam Controller Auto-Charge</h1>
       <p class="status">{{ statusMsg }}</p>
       
-      <div class="battery-status" v-if="isConnected">
-        <span>🔋 Voltage: {{ controller.batteryVoltage }}mV</span>
-        <span>| Level: {{ controller.batteryPercent }}%</span>
-        <span>| Charging: {{ controller.isCharging ? 'YES' : 'NO' }}</span>
-      </div>
+      <StatusBar v-if="isConnected" :controller="controller" />
 
       <div class="controls">
         <button @click="connectHID" :disabled="isConnected" class="btn-cta">
@@ -363,10 +364,14 @@ const resetTracking = async () => {
       <ol>
         <li>Connect the Steam Controller.</li>
         <li>Ensure camera is directly overhead.</li>
-        <li>Click the Puck, then the Front of the controller, then the Back.</li>
+        <li>Click the Puck, then the Steam button, then the Share button.</li>
         <li>These points will be saved automatically for your next refresh!</li>
       </ol>
       <p>The app will track those pixels and steer the controller home using computer vision!</p>
+    </div>
+
+    <div class="disclaimer">
+      <p><strong>Disclaimer:</strong> This project is not affiliated with, endorsed by, or in any way associated with Steam or Valve Corporation. They won't even give me an allocation for a Steam Machine.</p>
     </div>
   </div>
 </template>
@@ -384,6 +389,20 @@ const resetTracking = async () => {
 .masthead {
   text-align: center;
   padding: 2rem;
+}
+.disclaimer {
+  margin-top: 20px;
+  padding: 15px 20px;
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 8px;
+  max-width: 600px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+.disclaimer p {
+  margin: 0;
 }
 .btn-cta, .btn-reset {
   background: #3498db;
@@ -415,19 +434,7 @@ const resetTracking = async () => {
   margin-bottom: 10px;
   font-size: 1.2rem;
 }
-.battery-status {
-  background: #333;
-  padding: 8px 15px;
-  border-radius: 6px;
-  display: inline-block;
-  margin-bottom: 15px;
-  font-family: monospace;
-  font-size: 1.1rem;
-  color: #2ecc71;
-}
-.battery-status span {
-  margin: 0 5px;
-}
+
 .controls {
   display: flex;
   justify-content: center;
@@ -446,5 +453,6 @@ const resetTracking = async () => {
   background: #222;
   padding: 1rem 2rem;
   border-radius: 8px;
+  text-align: left;
 }
 </style>

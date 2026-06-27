@@ -33,9 +33,11 @@ export class SteamController {
     return false;
   }
 
-  public isCharging: boolean = false;
+  public isCharging: boolean | null = null;
   public batteryPercent: number = 0;
   public batteryVoltage: number = 0;
+  public signalStrength: number = 0;
+  private hasProbed: boolean = false;
 
   private handleReport(event: any) {
     const data = new Uint8Array(event.data.buffer);
@@ -45,12 +47,34 @@ export class SteamController {
     // Then in WebHID, event.reportId == 1, data[0] == 0, data[1] == 0x04
     
     if (event.reportId === 67) {
+      // Extract signal strength from data[2] (just an assumption from the payload)
+      this.signalStrength = data[2];
+      
       // Report ID 67 ('C') is the Triton System Status report
       const batt = data[1];
       const volts = data[4] | (data[5] << 8);
       
       this.batteryPercent = batt;
       this.batteryVoltage = volts;
+      
+      // On first valid voltage reading, probe for charging state
+      if (!this.hasProbed && volts > 0) {
+        this.hasProbed = true;
+        // Query SETTING_DEVICE_POWER_STATUS (register 0x4E = 78) via
+        // ID_GET_SETTINGS_VALUES (0x89) feature report
+        for (const d of this.devices) {
+          if (d.opened) {
+            try {
+              const payload = new Uint8Array(64);
+              payload[0] = 0x4E; // SETTING_DEVICE_POWER_STATUS register
+              d.sendFeatureReport(0x89, payload).then(() => {
+                // The response should come back as an input report
+                // Report 121 handler will pick it up
+              }).catch(() => {});
+            } catch (_) {}
+          }
+        }
+      }
     }
     
     if (event.reportId === 121) {
