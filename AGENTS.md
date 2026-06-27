@@ -10,8 +10,9 @@
 - Prefer using nix-shell for system dependencies over Docker, nix-instantiate or globals.
 - Use nix-shell instead of nix-instantiate when possible
 - If this is a NixOS machine, You have these linux programs availble out of the box /etc/nixos/configuration.nix
-- If running with root permissions, **NEVER** leave files in $HOME with root only access.
 - **ALWAYS** run and test your code, if possible
 - **ALWAYS** run all the tests, if any, and fix any issues before finishing. By the end of you run all the tests should be passing.
 - When I ask you to fix a bug, fix it and add tests to make sure it doesn't happen again
+- Keep the module loading self contained, the user should be able to run this locally with no internet
+- Keep system requirements under 16GB of RAM and 8GB of vRAM, it should run on the 2026 Steam Machine's Chromium browser
 

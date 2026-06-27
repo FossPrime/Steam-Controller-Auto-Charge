@@ -117,7 +117,18 @@ export class SteamController {
     }
 
     const mappedChannel = channel < 2 ? (!channel ? 4 : 3) : channel - 2;
-    // For Trackpads (channel 0, 1), SCR sends report 129 (0x81) with length 7
+    
+    // Stop Triton Controller (2026) using report 0x83 with 0 gain/frequency
+    const data83 = new Uint8Array(9);
+    data83[0] = mappedChannel;
+    // The rest of data83 is 0 by default, stopping the rumble
+    for (const d of this.devices) {
+      if (d.opened) {
+        try { await d.sendReport(0x83, data83); } catch (e) {}
+      }
+    }
+
+    // Stop Original Steam Controller Trackpads (channel 0, 1) - report 129 (0x81)
     const data81 = new Uint8Array(7);
     data81[0] = mappedChannel;
     for (const d of this.devices) {
@@ -126,6 +137,7 @@ export class SteamController {
       }
     }
     
+    // Stop Original Steam Controller Rumble (channel 0, 1) - report 143 (0x8F)
     const data8F = new Uint8Array(63);
     data8F[1] = channel;
     data8F[7] = 0x80;
@@ -133,6 +145,12 @@ export class SteamController {
       if (d.opened) {
         try { await d.sendReport(0x8F, data8F); } catch (e) {}
       }
+    }
+  }
+
+  async stopAll() {
+    for (let i = 0; i < 4; i++) {
+      await this.stop(i);
     }
   }
 

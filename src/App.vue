@@ -153,8 +153,7 @@ const sendControl = async (state: string) => {
   lastState = state;
   
   if (state === "STOP") {
-    await controller.stop(0);
-    await controller.stop(1);
+    await controller.stopAll();
   } else if (state === "FORWARD") {
     await controller.pulse(0, 70);
     await controller.pulse(1, 70);
@@ -320,12 +319,14 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
-  sendControl("STOP");
+  controller.stopAll();
   if (oldGray) oldGray.delete();
   if (p0) p0.delete();
 });
 
-const resetTracking = () => {
+const resetTracking = async () => {
+  await controller.stopAll();
+  localStorage.removeItem('trackPoints');
   window.location.reload();
 };
 
@@ -334,7 +335,7 @@ const resetTracking = () => {
 <template>
   <div class="app-container">
     <header class="masthead">
-      <h1>Auto-Charge Vision Tracker</h1>
+      <h1>Steam Controller Auto-Charge</h1>
       <p class="status">{{ statusMsg }}</p>
       
       <div class="battery-status" v-if="isConnected">
@@ -348,7 +349,7 @@ const resetTracking = () => {
           {{ isConnected ? 'Controller Linked' : 'Connect Steam Controller' }}
         </button>
         <button v-if="selectionStep === 3" @click="resetTracking" class="btn-reset">
-          Reset Tracking
+          STOP / Reset
         </button>
       </div>
     </header>
