@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive } from 'vue';
+import cvModule from '@techstark/opencv-js';
 import { SteamController } from './steamController';
 import StatusBar from './components/StatusBar.vue';
 
@@ -42,17 +43,29 @@ const startCamera = async () => {
     
     statusMsg.value = "Camera started. Waiting for OpenCV...";
     
-    const checkCV = setInterval(() => {
-      if ((window as any).cv && (window as any).cv.calcOpticalFlowPyrLK) {
-        clearInterval(checkCV);
-        statusMsg.value = "Waiting for video stream...";
-        
-        // Wait for video dimensions and auto-detect
+    let cv = cvModule as any;
+    if (cv instanceof Promise) {
+      cv = await cv;
+    } else if (!cv.Mat) {
+      await new Promise<void>((resolve) => {
+        cv.onRuntimeInitialized = () => resolve();
+      });
+    }
+
+    if (cv.calcOpticalFlowPyrLK) {
+      statusMsg.value = "Click the Charging Puck to begin.";
+      
+      // Wait for video dimensions and auto-detect
+      if (videoRef.value && videoRef.value.readyState >= 2) {
+        setTimeout(autoDetect, 1000);
+      } else {
         videoRef.value?.addEventListener('loadeddata', () => {
           setTimeout(autoDetect, 1000); // Give the camera 1s to adjust exposure
         });
       }
-    }, 500);
+    } else {
+      statusMsg.value = "Failed to load OpenCV!";
+    }
 
   } catch (err) {
     console.error(err);
@@ -125,9 +138,10 @@ const onCanvasClick = (e: MouseEvent) => {
 };
 
 
-const initOpticalFlow = () => {
-  const cv = (window as any).cv;
+const initOpticalFlow = async () => {
   if (!canvasRef.value) return;
+  let cv = cvModule as any;
+  if (cv instanceof Promise) cv = await cv;
   
   const ctx = canvasRef.value.getContext('2d');
   if (!ctx) return;
@@ -167,12 +181,14 @@ const sendControl = async (state: string) => {
   }
 };
 
-const processVideo = () => {
+const processVideo = async () => {
   if (!videoRef.value || !canvasRef.value) return;
   const video = videoRef.value;
   const canvas = canvasRef.value;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  const cv = (window as any).cv;
+  
+  let cv = cvModule as any;
+  if (cv instanceof Promise) cv = await cv;
   
   if (!ctx || video.videoWidth === 0 || !cv) {
     animationFrameId = requestAnimationFrame(processVideo);
@@ -207,7 +223,7 @@ const processVideo = () => {
     const err = new cv.Mat();
     const winSize = new cv.Size(31, 31);
     const maxLevel = 3;
-    const criteria = new cv.TermCriteria(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 30, 0.01);
+    const criteria = new cv.TermCriteria(cv.TermCriteria_EPS | cv.TermCriteria_COUNT, 30, 0.01);
     
     cv.calcOpticalFlowPyrLK(oldGray, frameGray, p0, p1, st, err, winSize, maxLevel, criteria);
     
@@ -225,30 +241,33 @@ const processVideo = () => {
       const fx = p1.data32F[2], fy = p1.data32F[3];
       const bx = p1.data32F[4], by = p1.data32F[5];
       
-      // Draw points
-      ctx.fillStyle = 'lime';
-      [ {x: px, y: py}, {x: fx, y: fy}, {x: bx, y: by} ].forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 5, 0, 2*Math.PI);
-        ctx.fill();
-      });
-      
-      // Draw controller orientation line
-      ctx.strokeStyle = 'yellow';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(bx, by);
-      ctx.lineTo(fx, fy);
-      ctx.stroke();
-      
-      // Draw target line
       const cx = (fx + bx) / 2;
       const cy = (fy + by) / 2;
-      ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(px, py);
-      ctx.stroke();
+
+      if (isTracking.value) {
+        // Draw points
+        ctx.fillStyle = 'lime';
+        [ {x: px, y: py}, {x: fx, y: fy}, {x: bx, y: by} ].forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 5, 0, 2*Math.PI);
+          ctx.fill();
+        });
+        
+        // Draw controller orientation line
+        ctx.strokeStyle = 'yellow';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(fx, fy);
+        ctx.stroke();
+        
+        // Draw target line
+        ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(px, py);
+        ctx.stroke();
+      }
       
       // Update p0 and oldGray for next frame
       p0.data32F.set(p1.data32F);

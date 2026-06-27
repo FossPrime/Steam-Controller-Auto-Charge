@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "js-aruco2": "^2.0.0",
+    "@techstark/opencv-js": "^5.0.0-release.1",
     "vue": "^3.5.38"
   },
   "devDependencies": {
