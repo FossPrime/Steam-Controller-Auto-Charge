@@ -4,9 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "wasm:build": "cd src/wasm-obstacle-detect && wasm-pack build --target web --out-dir ../wasm-pkg",
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --import tsx/esm --test \"tests/**/*.{test.ts,test.mjs}\"",
+    "test:watch": "node --import tsx/esm --test --watch \"tests/**/*.{test.ts,test.mjs}\""
   },
   "license": "MIT",
   "dependencies": {
@@ -17,6 +20,10 @@
     "@types/node": "^24.13.2",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/tsconfig": "^0.9.1",
+    "canvas": "^3.2.3",
+    "jimp": "^1.6.1",
+    "sharp": "^0.33.5",
+    "tsx": "^4.19.4",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
     "vue-tsc": "^3.3.5"

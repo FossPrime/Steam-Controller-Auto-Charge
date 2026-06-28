@@ -21,8 +21,16 @@ npm install
 npm run dev
 ```
 
-4. Click **"Connect Steam Controller"** and authorize the device prompt.
-5. Click the physical Charging Puck, the front of the controller, and the back of the controller on the video feed to begin autonomous tracking.
+## Usage
+
+1. Mount a webcam directly overhead pointing at the desk.
+2. Place the Steam Controller Auto-Charge puck on the desk.
+3. Place your Steam Controller on the desk, upright.
+4. Open the web interface and click **Connect Steam Controller** to pair it via WebHID.
+5. Click **✨ Auto-Track** to engage automatic tracking. The button will highlight to indicate it's active and will automatically resume tracking on page reload. Click it again to disengage.
+6. The controller will now autonomously navigate to the puck using a Lucas-Kanade optical flow loop combined with obstacle avoidance powered by an in-browser Rust/WASM CNN!
+
+*(Note: Manual tracking is still available if you prefer. Just click the puck, then the top of the controller, then the bottom of the controller).*
 
 ## Architecture
 

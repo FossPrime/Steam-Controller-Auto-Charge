@@ -37,6 +37,7 @@ export class SteamController {
   public batteryPercent: number = 0;
   public batteryVoltage: number = 0;
   public signalStrength: number = 0;
+  public eStop: boolean = false;
   private hasProbed: boolean = false;
 
   private handleReport(event: any) {
@@ -110,13 +111,18 @@ export class SteamController {
   private startPulsing() {
     if (this.pulseInterval) return;
     this.pulseInterval = setInterval(() => {
+      if (this.eStop) {
+         clearInterval(this.pulseInterval);
+         this.pulseInterval = null;
+         return;
+      }
       this.activeChannels.forEach(c => this._sendPulse(c.channel, c.freq));
     }, 50); // pulse every 50ms
   }
 
   // frequency in Hz
   async pulse(channel: number, frequency: number) {
-    if (this.devices.length === 0) return;
+    if (this.devices.length === 0 || this.eStop) return;
     
     // Remove old frequency for this channel if exists
     for (const c of this.activeChannels) {

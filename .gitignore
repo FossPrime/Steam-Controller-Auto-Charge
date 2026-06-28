@@ -3,3 +3,8 @@ node_modules
 AGENTS.md
 Screenshot_*.png
 
+test_*.ts
+test_*.mjs
+run_test_*.mjs
+fix_test.mjs
+src/wasm-obstacle-detect/target/
