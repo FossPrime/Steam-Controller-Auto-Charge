@@ -9,7 +9,8 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "node --import tsx/esm --test \"tests/**/*.{test.ts,test.mjs}\"",
-    "test:watch": "node --import tsx/esm --test --watch \"tests/**/*.{test.ts,test.mjs}\""
+    "test:watch": "node --import tsx/esm --test --watch \"tests/**/*.{test.ts,test.mjs}\"",
+    "postinstall": "nix-shell --run 'npm run wasm:build'"
   },
   "license": "MIT",
   "dependencies": {

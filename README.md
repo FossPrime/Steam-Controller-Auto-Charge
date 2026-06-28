@@ -12,9 +12,14 @@ Triton Auto-Charge Vision Tracker is an open-source web application designed to 
 
 ## Setup
 
-1. Position an overhead webcam looking down at your desk.
-2. Ensure you are using a Chromium-based browser supporting the WebHID API.
-3. Install dependencies and run the development server:
+### Requirements
+- **Nix Package Manager**: Required to automatically build the Rust/WASM obstacle detection module via `nix-shell`.
+  > *(If you do not want to install Nix, we suggest downloading **v0.1**, which features manual tracking only and no obstacle avoidance).*
+- A Chromium-based browser supporting the WebHID API.
+- An overhead webcam pointing down at your desk.
+
+1. Mount a webcam directly overhead pointing at the desk.
+2. Install dependencies (this will automatically build the WASM module using Nix) and run the development server:
 
 ```bash
 npm install
