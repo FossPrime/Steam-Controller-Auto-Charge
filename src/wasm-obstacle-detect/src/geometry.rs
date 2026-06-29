@@ -65,67 +65,17 @@ pub fn compute_oriented_bbox(pixels: &[(u32, u32)]) -> (OrientedBBox, f32) {
 
     let u_len = max_u - min_u;
     let v_len = max_v - min_v;
-    let u_asym = max_u + min_u; // positive if bounding box extends more in +u
-    let v_asym = max_v + min_v; // positive if bounding box extends more in +v
 
-    // ── Pixel Mass Asymmetry (for 180-deg ambiguity) ──────────────
-    // The centroid balances the moments, but the 'fat' side of an object 
-    // will always have a larger raw pixel count than the 'thin' side.
-    let mut u_mass_pos = 0;
-    let mut u_mass_neg = 0;
-    let mut v_mass_pos = 0;
-    let mut v_mass_neg = 0;
-
-    for &(px, py) in pixels {
-        let dx = px as f64 - cx;
-        let dy = py as f64 - cy;
-        let u = dx * cos_t + dy * sin_t;
-        let v = -dx * sin_t + dy * cos_t;
-        
-        if u > 0.0 { u_mass_pos += 1; } else { u_mass_neg += 1; }
-        if v > 0.0 { v_mass_pos += 1; } else { v_mass_neg += 1; }
-    }
-
-    let mut forward_u = 1.0;
-    let mut forward_v = 0.0;
-    let mut swap_axes = false;
-
-    // Use aspect ratio to determine if the object is functionally "wider than it is tall"
-    let aspect_ratio = u_len / v_len;
-
-    if aspect_ratio < 1.6 {
-        swap_axes = true;
-        // Controller: Top is a solid fat block, bottom has a gap between grips.
-        // So the front (top) is the FAT side (has more pixels).
-        // If v_mass_pos > v_mass_neg, then +v is the front!
-        forward_v = if v_mass_pos > v_mass_neg { 1.0 } else { -1.0 };
-        forward_u = 0.0;
-    } else {
-        // Phone/Mouse/Remote: Back is usually heavier (mouse) or it's symmetrical (phone).
-        // If u_mass_pos > u_mass_neg, then +u is the fat side. Front is opposite (-u).
-        forward_u = if u_mass_pos > u_mass_neg { -1.0 } else { 1.0 };
-    }
-
-    // Calculate the final angle based on the chosen forward vector.
-    // Base axes in image space: u_vec = (cos_t, sin_t), v_vec = (-sin_t, cos_t)
-    let final_vec_x = forward_u * cos_t + forward_v * -sin_t;
-    let final_vec_y = forward_u * sin_t + forward_v * cos_t;
-    
-    let angle_deg = final_vec_y.atan2(final_vec_x).to_degrees() as f32;
-
-    // width is the dimension along the forward axis, height is perpendicular
-    let obb_width = if swap_axes { v_len as f32 } else { u_len as f32 };
-    let obb_height = if swap_axes { u_len as f32 } else { v_len as f32 };
-
+    // width is the dimension along the principal axis, height is perpendicular
     let obb = OrientedBBox {
         center_x: cx as f32,
         center_y: cy as f32,
-        width: obb_width,
-        height: obb_height,
-        angle: angle_deg,
+        width: u_len as f32,
+        height: v_len as f32,
+        angle: theta.to_degrees() as f32,
     };
 
-    (obb, angle_deg)
+    (obb, theta.to_degrees() as f32)
 }
 
 #[cfg(test)]

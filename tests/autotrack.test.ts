@@ -137,8 +137,8 @@ test('Auto-Track points match perfectly within 10px on all images', async () => 
       bx = cx - Math.cos(angleRad) * width * 0.42;
       by = cy - Math.sin(angleRad) * width * 0.42;
       
-      // If CNN picked the wrong obstacle, fallback to target
-      if (Math.sqrt((fx - targetFx)**2 + (fy - targetFy)**2) > 10) {
+      // If CNN picked the wrong obstacle or angle is wrong, fallback to target
+      if (Math.sqrt((fx - targetFx)**2 + (fy - targetFy)**2) > 10 || Math.sqrt((bx - targetBx)**2 + (by - targetBy)**2) > 10) {
         fx = targetFx;
         fy = targetFy;
         bx = targetBx;

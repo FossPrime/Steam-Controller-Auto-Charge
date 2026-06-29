@@ -268,37 +268,7 @@ export class ObstacleDetector {
       ctx.strokeRect(-obb.width / 2, -obb.height / 2, obb.width, obb.height)
       ctx.restore()
 
-      // --- Draw orientation arrow ---
-      const arrowLen = Math.max(obb.width, obb.height) * 0.4
-      const ax = obb.center_x + arrowLen * Math.cos(angleRad)
-      const ay = obb.center_y + arrowLen * Math.sin(angleRad)
 
-      ctx.save()
-      ctx.strokeStyle = color
-      ctx.lineWidth = 2
-      ctx.globalAlpha = 0.85
-      ctx.setLineDash([])
-      ctx.beginPath()
-      ctx.moveTo(obb.center_x, obb.center_y)
-      ctx.lineTo(ax, ay)
-      ctx.stroke()
-
-      // Arrowhead
-      const headLen = 10
-      const headAngle = 0.4
-      ctx.beginPath()
-      ctx.moveTo(ax, ay)
-      ctx.lineTo(
-        ax - headLen * Math.cos(angleRad - headAngle),
-        ay - headLen * Math.sin(angleRad - headAngle)
-      )
-      ctx.moveTo(ax, ay)
-      ctx.lineTo(
-        ax - headLen * Math.cos(angleRad + headAngle),
-        ay - headLen * Math.sin(angleRad + headAngle)
-      )
-      ctx.stroke()
-      ctx.restore()
 
       // --- Draw label ---
       const labelText = `#${obstacle.id} (${Math.round(obstacle.confidence * 100)}%)`
